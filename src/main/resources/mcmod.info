@@ -1,0 +1,14 @@
+[
+  {
+    "modid": "gottagofast",
+    "name": "Gotta Go Fast",
+    "description": "Removes the player moved too quickly message and rubberbanding",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "authorList": [
+      "Thiakil"
+    ],
+    "credits": "",
+    "logoFile": "assets/gottagofast/logo.png"
+  }
+]
