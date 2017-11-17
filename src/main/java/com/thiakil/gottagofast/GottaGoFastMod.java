@@ -32,9 +32,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.cert.Certificate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 /*@Mod(
         modid = GottaGoFastMod.MOD_ID,
@@ -68,7 +70,7 @@ public class GottaGoFastMod extends DummyModContainer {
     @Subscribe
     public void handleModStateEvent(FMLEvent event){
         if (event instanceof FMLConstructionEvent){
-            List<String> certs = CertificateHelper.getFingerprints(getClass().getProtectionDomain().getCodeSource().getCertificates());
+            List<String> certs = Arrays.stream(getClass().getProtectionDomain().getCodeSource().getCertificates()).map(CertificateHelper::getFingerprint).collect(Collectors.toList());
             boolean foundCert = false;
             String myFinger = "@FINGERPRINT@".toLowerCase().replaceAll(":", "");
             for (String c : certs){

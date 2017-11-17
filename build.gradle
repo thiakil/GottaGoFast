@@ -7,7 +7,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT"
+        classpath "net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT"
     }
 }
 
@@ -39,6 +39,11 @@ repositories {
 }
 
 dependencies {
+}
+
+sourceCompatibility = targetCompatibility = "1.8" // Need this here so eclipse task generates correctly.
+compileJava {
+    sourceCompatibility = targetCompatibility = "1.8"
 }
 
 processResources {
