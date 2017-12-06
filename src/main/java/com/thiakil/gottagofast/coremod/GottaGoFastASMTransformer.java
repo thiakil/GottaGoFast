@@ -23,8 +23,12 @@ import net.minecraft.launchwrapper.Launch;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class GottaGoFastASMTransformer implements IClassTransformer {
     private static final String NETHANDLERSERVER_CLASS = "net.minecraft.network.NetHandlerPlayServer";//.processPlayer
@@ -32,66 +36,38 @@ public class GottaGoFastASMTransformer implements IClassTransformer {
     private static boolean isDev = (Boolean)Launch.blackboard.get("fml.deobfuscatedEnvironment");
 
     private static final String NetHandlerPlayServer_processPlayer = srg("processPlayer", "func_147347_a");
+    private static final String NetHandlerPlayServer_processVehicleMove = srg("processVehicleMove", "func_184338_a");
     private static final String NetHandlerPlayServer_Player = srg("player", "field_147369_b");
-    private static final String EntityPlayerMP_isInvulnerableDimensionChange = srg("isInvulnerableDimensionChange", "func_184850_K");
-    private static final String EntityPlayerMP_getServerWorld = srg("getServerWorld", "func_71121_q");
-    private static final String EntityPlayerMP_isPlayerSleeping = srg("isPlayerSleeping", "func_70608_bn");
-    private static final String EntityPlayerMP_interactionManager = srg("interactionManager", "field_71134_c");
-    private static final String ServerWorld_getGameRules = srg("getGameRules", "func_82736_K");
-    private static final String GameRules_getBoolean = srg("getBoolean", "func_82766_b");
-    private static final String PlayerInteractionManager_isCreative = srg("isCreative", "func_73083_d");
-    private static final String PlayerInteractionManager_getGameType = srg("getGameType", "func_73081_b");
+    private static final String EntityLivingBase_isElytraFlying = srg("isElytraFlying", "func_184613_cA");
 
-    //instructions to search for the "{} moved too quickly! {},{},{}" check. We forcibly insert a jump after the first instruction as if the if check never was true.
-    //NB dest label is followed by frame reset, so the GOTO must got after the frame instruction in the target list
-    private AbstractInsnNode[] tooQuicklyInsnNodes;
+    private AbstractInsnNode[] elytraConst = getInstructionsList(mv->{
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/network/NetHandlerPlayServer", NetHandlerPlayServer_Player, "Lnet/minecraft/entity/player/EntityPlayerMP;");
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/entity/player/EntityPlayerMP", EntityLivingBase_isElytraFlying, "()Z", false);
+        Label l41 = new Label();
+        mv.visitJumpInsn(Opcodes.IFEQ, l41);
+        mv.visitLdcInsn(new Float("300.0"));
+    });
 
-    //"{} moved wrongly!" instructions
-    private AbstractInsnNode[] movedWronglyInsnNodes;
+    private AbstractInsnNode[] normalMovementConst = getInstructionsList(mv->{
+        Label l41 = new Label();
+        mv.visitJumpInsn(Opcodes.IFEQ, l41);
+        mv.visitLdcInsn(new Float("300.0"));
+        Label l42 = new Label();
+        mv.visitJumpInsn(Opcodes.GOTO, l42);
+        mv.visitLabel(l41);
+        mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+        mv.visitLdcInsn(new Float("100.0"));
+    });
+
+    private AbstractInsnNode[] vehicleMovementConst = getInstructionsList(mv->{
+        mv.visitVarInsn(Opcodes.DLOAD, 26);
+        mv.visitVarInsn(Opcodes.DLOAD, 24);
+        mv.visitInsn(Opcodes.DSUB);
+        mv.visitLdcInsn(new Double("100.0"));
+    });
 
     public GottaGoFastASMTransformer(){
-        MethodNode targetInstructions = new MethodNode();
-        targetInstructions.visitFrame(Opcodes.F_APPEND,1, new Object[] {Opcodes.INTEGER}, 0, null);
-        targetInstructions.visitVarInsn(Opcodes.ALOAD, 0);
-        targetInstructions.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/network/NetHandlerPlayServer", NetHandlerPlayServer_Player, "Lnet/minecraft/entity/player/EntityPlayerMP;");
-        targetInstructions.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/entity/player/EntityPlayerMP", EntityPlayerMP_isInvulnerableDimensionChange, "()Z", false);
-        Label l39 = new Label();
-        targetInstructions.visitJumpInsn(Opcodes.IFNE, l39);
-        targetInstructions.visitVarInsn(Opcodes.ALOAD, 0);
-        targetInstructions.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/network/NetHandlerPlayServer", NetHandlerPlayServer_Player, "Lnet/minecraft/entity/player/EntityPlayerMP;");
-        targetInstructions.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/entity/player/EntityPlayerMP", EntityPlayerMP_getServerWorld, "()Lnet/minecraft/world/WorldServer;", false);
-        targetInstructions.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/WorldServer", ServerWorld_getGameRules, "()Lnet/minecraft/world/GameRules;", false);
-        targetInstructions.visitLdcInsn("disableElytraMovementCheck");
-        targetInstructions.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/world/GameRules", GameRules_getBoolean, "(Ljava/lang/String;)Z", false);
-        tooQuicklyInsnNodes = targetInstructions.instructions.toArray();
-
-        //too wrongly check
-        targetInstructions = new MethodNode();
-        targetInstructions.visitVarInsn(Opcodes.ALOAD, 0);
-        targetInstructions.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/network/NetHandlerPlayServer", NetHandlerPlayServer_Player, "Lnet/minecraft/entity/player/EntityPlayerMP;");
-        targetInstructions.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/entity/player/EntityPlayerMP", EntityPlayerMP_isInvulnerableDimensionChange, "()Z", false);
-        Label l63 = new Label();
-        targetInstructions.visitJumpInsn(Opcodes.IFNE, l63);
-        targetInstructions.visitVarInsn(Opcodes.DLOAD, 27);
-        targetInstructions.visitLdcInsn(new Double("0.0625"));
-        targetInstructions.visitInsn(Opcodes.DCMPL);
-        targetInstructions.visitJumpInsn(Opcodes.IFLE, l63);
-        targetInstructions.visitVarInsn(Opcodes.ALOAD, 0);
-        targetInstructions.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/network/NetHandlerPlayServer", NetHandlerPlayServer_Player, "Lnet/minecraft/entity/player/EntityPlayerMP;");
-        targetInstructions.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/entity/player/EntityPlayerMP", EntityPlayerMP_isPlayerSleeping, "()Z", false);
-        targetInstructions.visitJumpInsn(Opcodes.IFNE, l63);
-        targetInstructions.visitVarInsn(Opcodes.ALOAD, 0);
-        targetInstructions.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/network/NetHandlerPlayServer", NetHandlerPlayServer_Player, "Lnet/minecraft/entity/player/EntityPlayerMP;");
-        targetInstructions.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/entity/player/EntityPlayerMP", EntityPlayerMP_interactionManager, "Lnet/minecraft/server/management/PlayerInteractionManager;");
-        targetInstructions.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/server/management/PlayerInteractionManager", PlayerInteractionManager_isCreative, "()Z", false);
-        targetInstructions.visitJumpInsn(Opcodes.IFNE, l63);
-        targetInstructions.visitVarInsn(Opcodes.ALOAD, 0);
-        targetInstructions.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/network/NetHandlerPlayServer", NetHandlerPlayServer_Player, "Lnet/minecraft/entity/player/EntityPlayerMP;");
-        targetInstructions.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/entity/player/EntityPlayerMP", EntityPlayerMP_interactionManager, "Lnet/minecraft/server/management/PlayerInteractionManager;");
-        targetInstructions.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/server/management/PlayerInteractionManager", PlayerInteractionManager_getGameType, "()Lnet/minecraft/world/GameType;", false);
-        targetInstructions.visitFieldInsn(Opcodes.GETSTATIC, "net/minecraft/world/GameType", "SPECTATOR", "Lnet/minecraft/world/GameType;");
-        targetInstructions.visitJumpInsn(Opcodes.IF_ACMPEQ, l63);
-        movedWronglyInsnNodes = targetInstructions.instructions.toArray();
     }
 
     @Override
@@ -111,7 +87,7 @@ public class GottaGoFastASMTransformer implements IClassTransformer {
             }
 
             if (needsRewrite) {
-                final ClassWriter writer = new MCClassWriter(ClassWriter.COMPUTE_FRAMES);
+                final ClassWriter writer = new MCClassWriter(ClassWriter.COMPUTE_MAXS);
                 classNode.accept(writer);
                 return writer.toByteArray();
             } else {
@@ -124,126 +100,77 @@ public class GottaGoFastASMTransformer implements IClassTransformer {
     }
 
     private boolean patchProcessPlayer(ClassNode classNode){
-        boolean foundMethod = false;
+        boolean foundProcessPlayer = false;
+        boolean foundProcessVehicle = false;
         for (MethodNode methodNode : classNode.methods){
             if (methodNode.name.equals(NetHandlerPlayServer_processPlayer) && methodNode.desc != null && methodNode.desc.equals("(Lnet/minecraft/network/play/client/CPacketPlayer;)V")){
                 GottaGoFastMod.logger.info("patching "+NETHANDLERSERVER_CLASS+".processPlayer(CPacketPlayer)");
-                foundMethod = true;
-                AbstractInsnNode tooQuicklyStartNode = null;
-                AbstractInsnNode wronglyStartNode = null;
+                AbstractInsnNode elytraMoveNode = null;
+                AbstractInsnNode normalMoveNode = null;
                 AbstractInsnNode[] instructions = methodNode.instructions.toArray();
 
-                for (int i = 0; i < instructions.length && i+ tooQuicklyInsnNodes.length <= instructions.length; i++) {//within array bounds & instructions list end is also
-                    AbstractInsnNode instruction = instructions[i];
-
-                    if (matchesTooQuickly(instruction, instructions, i)){
-                        tooQuicklyStartNode = instruction;
-                        GottaGoFastMod.logger.info("Found moved too fast check");
-                        if (instructions[i+4] instanceof JumpInsnNode) {
-                            methodNode.instructions.insert(tooQuicklyStartNode, new JumpInsnNode(Opcodes.GOTO, ((JumpInsnNode)instructions[i+4]).label));
-                            /*((JumpInsnNode)instructions[i+4]).setOpcode(Opcodes.GOTO);
-                            ((FrameNode)instruction).local = null;
-                            ((FrameNode) instruction).type = Opcodes.F_SAME;*/
-                        } else {
-                            GottaGoFastMod.logger.error("Did not find jump class in correct place (but the list matched?!). Please report.");
-                        }
-                    } else if (matchesMovedWrongly(instruction, instructions, i)){
-                        wronglyStartNode = instruction;
-                        GottaGoFastMod.logger.info("Found moved wrongly check");
-                        if (instructions[i+3] instanceof JumpInsnNode) {
-                            //first instruction changes the stack, must insert BEFORE this one.
-                            methodNode.instructions.insertBefore(wronglyStartNode, new JumpInsnNode(Opcodes.GOTO, ((JumpInsnNode)instructions[i+3]).label));
-                            //((JumpInsnNode)instructions[i+3]).setOpcode(Opcodes.GOTO);
-                        } else {
-                            GottaGoFastMod.logger.error("Did not find jump class in correct place (but the list matched?!). Please report.");
-                        }
+                for (int i = 0; i < instructions.length && (elytraMoveNode == null || normalMoveNode == null); i++) {//within array bounds & instructions list end is also
+                    if (matchesList(instructions, i, elytraConst)){
+                        elytraMoveNode = instructions[i+elytraConst.length-1];
+                        methodNode.instructions.insertBefore(elytraMoveNode, new FieldInsnNode(Opcodes.GETSTATIC, "com/thiakil/gottagofast/GottaGoFastMod", "MAX_PLAYER_ELYTRA_SPEED", "F"));
+                        methodNode.instructions.remove(elytraMoveNode);
+                    } else if (matchesList(instructions, i, normalMovementConst)){
+                        normalMoveNode = instructions[i+normalMovementConst.length-1];
+                        methodNode.instructions.insertBefore(normalMoveNode, new FieldInsnNode(Opcodes.GETSTATIC, "com/thiakil/gottagofast/GottaGoFastMod", "MAX_PLAYER_SPEED", "F"));
+                        methodNode.instructions.remove(normalMoveNode);
                     }
+                }
 
-                    /*if (MOVED_TOO_QUICKLY_PREDICATE.test(instruction)){
-                        //found the node, but that's not the last instruction of that line
-                        //keep going until we find a label node, which is usually a sign of a new code line
-                        AbstractInsnNode localInst = instruction.getNext();
-                        while (!(localInst instanceof LabelNode) && localInst != null){
-                            localInst = localInst.getNext();
-                        }
-                        if (localInst != null) {
-                            insertAfter = localInst.getPrevious();
-                            break;
-                        }
-                    }*/
-                }
-                if (tooQuicklyStartNode == null){
-                    GottaGoFastMod.logger.error("Couldn't find the 'moved too quickly' instruction to insert after :(");
+                if (elytraMoveNode == null){
+                    GottaGoFastMod.logger.error("Couldn't find the elytra constant instruction to modify :(");
                     GottaGoFastMod.logger.error("Please report this");
                 }
-                if (wronglyStartNode == null){
-                    GottaGoFastMod.logger.error("Couldn't find the 'moved wrongly' instruction to insert after :(");
+                if (normalMoveNode == null){
+                    GottaGoFastMod.logger.error("Couldn't find the player constant instruction to modify :(");
                     GottaGoFastMod.logger.error("Please report this");
                 }
-                return tooQuicklyStartNode != null || wronglyStartNode != null;
+
+                foundProcessPlayer =  elytraMoveNode != null || normalMoveNode != null;
+            } else if (methodNode.name.equals(NetHandlerPlayServer_processVehicleMove) && methodNode.desc != null && methodNode.desc.equals("(Lnet/minecraft/network/play/client/CPacketVehicleMove;)V")){
+                GottaGoFastMod.logger.info("patching "+NETHANDLERSERVER_CLASS+".processVehicleMove(CPacketVehicleMove)");
+                AbstractInsnNode vehicleMoveNode = null;
+                AbstractInsnNode[] instructions = methodNode.instructions.toArray();
+                for (int i = 0; i < instructions.length && vehicleMoveNode == null; i++) {//within array bounds & instructions list end is also
+                    if (matchesList(instructions, i, vehicleMovementConst)){
+                        vehicleMoveNode = instructions[i+vehicleMovementConst.length-1];
+                        methodNode.instructions.insertBefore(vehicleMoveNode, new FieldInsnNode(Opcodes.GETSTATIC, "com/thiakil/gottagofast/GottaGoFastMod", "MAX_PLAYER_VEHICLE_SPEED", "D"));
+                        methodNode.instructions.remove(vehicleMoveNode);
+                    }
+                }
+                if (vehicleMoveNode == null){
+                    GottaGoFastMod.logger.error("Couldn't find the vehicle constant instruction to modify :(");
+                    GottaGoFastMod.logger.error("Please report this");
+                }
+                foundProcessVehicle = vehicleMoveNode != null;
             }
         }
-        if (!foundMethod) {
-            GottaGoFastMod.logger.error("Couldn't find the processPlayer method to patch :(");
+        if (!foundProcessPlayer) {
+            GottaGoFastMod.logger.error("Couldn't find the processPlayer method (or any of its patch targets) to patch :(");
             GottaGoFastMod.logger.error("Please report this");
         }
-        return foundMethod;
+        if (!foundProcessVehicle) {
+            GottaGoFastMod.logger.error("Couldn't find the processVehicleMove method (or any of its patch targets) to patch :(");
+            GottaGoFastMod.logger.error("Please report this");
+        }
+        return foundProcessPlayer || foundProcessVehicle;
     }
 
-    private boolean matchesTooQuickly(AbstractInsnNode testNode, AbstractInsnNode[] instructions, int testIndex){
-        if (!instructionsEqivalent(testNode, tooQuicklyInsnNodes[0])){
+    private boolean matchesList(AbstractInsnNode[] instructions, int testIndex, AbstractInsnNode[] testList){
+        if (!instructionsEqivalent(instructions[testIndex], testList[0]) || testIndex + testList.length > instructions.length){
             return false;
         }
-        for (int j = 1; j < tooQuicklyInsnNodes.length; j++){
-            if (!instructionsEqivalent(instructions[testIndex+j], tooQuicklyInsnNodes[j])){
+        for (int j = 1; j < testList.length; j++){
+            if (!instructionsEqivalent(instructions[testIndex+j], testList[j])){
                 return false;
             }
         }
         return true;
     }
-
-    private boolean matchesMovedWrongly(AbstractInsnNode testNode, AbstractInsnNode[] instructions, int testIndex){
-        if (!instructionsEqivalent(testNode, movedWronglyInsnNodes[0])){
-            return false;
-        }
-        for (int j = 1; j < movedWronglyInsnNodes.length; j++){
-            if (!instructionsEqivalent(instructions[testIndex+j], movedWronglyInsnNodes[j])){
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /*private boolean patchTriggersInit(ClassNode classNode){
-        boolean foundMethod = false;
-        for (MethodNode methodNode : classNode.methods){
-            if (methodNode.name.equals("<clinit>") && methodNode.desc != null && methodNode.desc.equals("()V")){
-                GottaGoFastMod.logger.info("patching net.minecraft.advancements.CriteriaTriggers init");
-                foundMethod = true;
-                AbstractInsnNode insertAfter = null;
-                ListIterator<AbstractInsnNode> iterator = methodNode.instructions.iterator();
-                while (iterator.hasNext()) {
-                    AbstractInsnNode instruction = iterator.next();
-                    if (instruction instanceof InsnNode && instruction.getOpcode() == Opcodes.RETURN){
-                        insertAfter = instruction.getPrevious();
-                        break;
-                    }
-                }
-                if (insertAfter == null){
-                    GottaGoFastMod.logger.error("Couldn't find the instruction to insert after :(");
-                    GottaGoFastMod.logger.error("Please report this");
-                    return false;
-                }
-                methodNode.instructions.insert(insertAfter, callHook("com.thiakil.concretefactories.advancements.AdvancementsPatchTarget", "inject", "()V"));
-                break;
-            }
-        }
-        if (!foundMethod) {
-            GottaGoFastMod.logger.error("Couldn't find the loadRecipes method to patch :(");
-            GottaGoFastMod.logger.error("Please report this");
-        }
-        return foundMethod;
-    }*/
 
     /**
      * Make a bytecode call to the specified static function
@@ -306,5 +233,11 @@ public class GottaGoFastASMTransformer implements IClassTransformer {
 
     private static String srg(String mcp, String srg){
         return isDev ? mcp : srg;
+    }
+
+    private static AbstractInsnNode[] getInstructionsList(Consumer<MethodVisitor> consumer){
+        MethodNode mn = new MethodNode();
+        consumer.accept(mn);
+        return mn.instructions.toArray();
     }
 }

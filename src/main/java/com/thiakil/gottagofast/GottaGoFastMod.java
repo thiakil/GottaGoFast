@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 import net.minecraftforge.fml.common.event.FMLEvent;
@@ -46,6 +47,11 @@ public class GottaGoFastMod extends DummyModContainer {
     public static final String MOD_ID = "gottagofast";
     public static final String MOD_NAME = "Gotta Go Fast";
     public static final String VERSION = "1.0";
+
+    //values are placeholders, actual defaults in `get` calls
+    public static float MAX_PLAYER_SPEED = Float.MAX_VALUE;
+    public static float MAX_PLAYER_ELYTRA_SPEED = Float.MAX_VALUE;
+    public static double MAX_PLAYER_VEHICLE_SPEED = 100.0F;
 
     public static Logger logger = LogManager.getLogger("Gotta Go Fast");
 
@@ -84,7 +90,13 @@ public class GottaGoFastMod extends DummyModContainer {
             }
         }
         if (event instanceof FMLPreInitializationEvent){
-
+            Configuration config = new Configuration(new File(Loader.instance().getConfigDir(), "gottagofast.cfg"));
+            MAX_PLAYER_SPEED = config.getFloat("max_player_speed", "general", Float.MAX_VALUE, 1F, Float.MAX_VALUE, "Maximum player movement speed (x^2 + y^2 + z^2) before triggering the moved too quickly messages. Vanilla is 100.0");
+            MAX_PLAYER_ELYTRA_SPEED = config.getFloat("max_player_elytra_speed", "general", Float.MAX_VALUE, 1F, Float.MAX_VALUE, "Maximum player movement speed (x^2 + y^2 + z^2) before triggering the moved too quickly messages when Elytra flying. Vanilla is 300.0");
+            MAX_PLAYER_VEHICLE_SPEED = config.getFloat("max_player_vehicle_speed", "general", 100.0F, 1F, Float.MAX_VALUE, "Maximum player vehicle (ridden entity) movement speed (x^2 + y^2 + z^2) before triggering the moved too quickly messages. Vanilla is 100.0");
+            if (config.hasChanged()){
+                config.save();
+            }
         }
     }
 
