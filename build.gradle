@@ -32,6 +32,8 @@ minecraft {
     replace '@FINGERPRINT@', project.findProperty('signSHA1')
     replaceIn "GottaGoFastMod.java"
 
+    coreMod = "com.thiakil.gottagofast.coremod.GottaGoFastLoader"
+
 }
 
 repositories {
