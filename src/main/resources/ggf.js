@@ -9,17 +9,6 @@ var MethodNode = Packages.org.objectweb.asm.tree.MethodNode
 var Opcodes = Packages.org.objectweb.asm.Opcodes
 var Label = Packages.org.objectweb.asm.Label
 
-/**
- *
- * @param {(visitor: typeof MethodNode)=>void}consumer
- * @return {Array<AbstractInsnNode>}
- */
-function getInstructionsList(consumer){
-    var mn = new MethodNode();
-    consumer(mn);
-    return mn.instructions.toArray();
-}
-
 function initializeCoreMod() {
     return {
         'playerMove': {
@@ -101,6 +90,17 @@ function movePlayerTransformer(methodNode) {
     }
 
     return methodNode
+}
+
+/**
+ *
+ * @param {(visitor: typeof MethodNode)=>void}consumer
+ * @return {Array<AbstractInsnNode>}
+ */
+function getInstructionsList(consumer){
+    var mn = new MethodNode();
+    consumer(mn);
+    return mn.instructions.toArray();
 }
 
 function matchesList(instructions, testIndex, testList){
