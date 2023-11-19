@@ -1,13 +1,13 @@
-const ASMAPI = Packages.net.minecraftforge.coremod.api.ASMAPI
-const AbstractInsnNode = Packages.org.objectweb.asm.tree.AbstractInsnNode
-const MethodInsnNode = Packages.org.objectweb.asm.tree.MethodInsnNode
-const VarInsnNode = Packages.org.objectweb.asm.tree.VarInsnNode
-const FieldInsnNode = Packages.org.objectweb.asm.tree.FieldInsnNode
-const FrameNode = Packages.org.objectweb.asm.tree.FrameNode
-const LdcInsnNode = Packages.org.objectweb.asm.tree.LdcInsnNode
-const MethodNode = Packages.org.objectweb.asm.tree.MethodNode
-const Opcodes = Packages.org.objectweb.asm.Opcodes
-const Label = Packages.org.objectweb.asm.Label
+var ASMAPI = Packages.net.minecraftforge.coremod.api.ASMAPI
+var AbstractInsnNode = Packages.org.objectweb.asm.tree.AbstractInsnNode
+var MethodInsnNode = Packages.org.objectweb.asm.tree.MethodInsnNode
+var VarInsnNode = Packages.org.objectweb.asm.tree.VarInsnNode
+var FieldInsnNode = Packages.org.objectweb.asm.tree.FieldInsnNode
+var FrameNode = Packages.org.objectweb.asm.tree.FrameNode
+var LdcInsnNode = Packages.org.objectweb.asm.tree.LdcInsnNode
+var MethodNode = Packages.org.objectweb.asm.tree.MethodNode
+var Opcodes = Packages.org.objectweb.asm.Opcodes
+var Label = Packages.org.objectweb.asm.Label
 
 /**
  *
@@ -15,7 +15,7 @@ const Label = Packages.org.objectweb.asm.Label
  * @return {Array<AbstractInsnNode>}
  */
 function getInstructionsList(consumer){
-    const mn = new MethodNode();
+    var mn = new MethodNode();
     consumer(mn);
     return mn.instructions.toArray();
 }
@@ -30,7 +30,7 @@ function initializeCoreMod() {
                 'methodDesc': "(Lnet/minecraft/network/protocol/game/ServerboundMovePlayerPacket;)V"
             },
             'transformer': function (methodNode) {
-                const elytraConst = getInstructionsList(function (methodVisitor) {
+                var elytravar = getInstructionsList(function (methodVisitor) {
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
                     methodVisitor.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/server/network/ServerGamePacketListenerImpl", ASMAPI.mapField('f_9743_'), "Lnet/minecraft/server/level/ServerPlayer;"); // player
                     methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/server/level/ServerPlayer", ASMAPI.mapMethod('m_21255_'), "()Z", false);// isFallFlying
@@ -39,8 +39,8 @@ function initializeCoreMod() {
                     methodVisitor.visitLdcInsn(new java.lang.Float("300.0"));
                 });
 
-                const normalMovementConst = getInstructionsList(function (methodVisitor) {
-                    const label9 = new Label();
+                var normalMovementvar = getInstructionsList(function (methodVisitor) {
+                    var label9 = new Label();
                     methodVisitor.visitJumpInsn(IFEQ, label9);
                     methodVisitor.visitLdcInsn(java.lang.Float.valueOf(300));
                     var label10 = new Label();
@@ -50,11 +50,11 @@ function initializeCoreMod() {
                     methodVisitor.visitLdcInsn(java.lang.Float.valueOf(100));
                 });
 
-                let elytraMoveNode = null;
-                let normalMoveNode = null;
-                const instructions = methodNode.instructions.toArray();
+                var elytraMoveNode = null;
+                var normalMoveNode = null;
+                var instructions = methodNode.instructions.toArray();
 
-                for (let i = 0; i < instructions.length && (elytraMoveNode == null || normalMoveNode == null); i++) {//within array bounds & instructions list end is also
+                for (var i = 0; i < instructions.length && (elytraMoveNode == null || normalMoveNode == null); i++) {//within array bounds & instructions list end is also
                     if (matchesList(instructions, i, elytraConst)){
                         elytraMoveNode = instructions[i+elytraConst.length-1];
                         methodNode.instructions.insertBefore(elytraMoveNode, new FieldInsnNode(Opcodes.GETSTATIC, "com/thiakil/gottagofast/GottaGoFastMod", "MAX_PLAYER_ELYTRA_SPEED", "F"));
@@ -77,16 +77,16 @@ function initializeCoreMod() {
                 "methodDesc": "(Lnet/minecraft/network/protocol/game/ServerboundMoveVehiclePacket;)V"
             },
             'transformer': function (method) {
-                const vehicleMovementConst = getInstructionsList(function (mv) {
+                var vehicleMovementvar = getInstructionsList(function (mv) {
                     mv.visitVarInsn(Opcodes.DLOAD, 26);
                     mv.visitVarInsn(Opcodes.DLOAD, 24);
                     mv.visitInsn(Opcodes.DSUB);
                     mv.visitLdcInsn(java.lang.Double.valueOf(100));
                 });
 
-                let vehicleMoveNode = null;
-                const instructions = methodNode.instructions.toArray();
-                for (let i = 0; i < instructions.length && vehicleMoveNode == null; i++) {//within array bounds & instructions list end is also
+                var vehicleMoveNode = null;
+                var instructions = methodNode.instructions.toArray();
+                for (var i = 0; i < instructions.length && vehicleMoveNode == null; i++) {//within array bounds & instructions list end is also
                     if (matchesList(instructions, i, vehicleMovementConst)){
                         vehicleMoveNode = instructions[i+vehicleMovementConst.length-1];
                         methodNode.instructions.insertBefore(vehicleMoveNode, new FieldInsnNode(Opcodes.GETSTATIC, "com/thiakil/gottagofast/GottaGoFastMod", "MAX_PLAYER_VEHICLE_SPEED", "D"));
@@ -103,7 +103,7 @@ function matchesList(instructions, testIndex, testList){
     if (!instructionsEqivalent(instructions[testIndex], testList[0]) || testIndex + testList.length > instructions.length){
         return false;
     }
-    for (let j = 1; j < testList.length; j++){
+    for (var j = 1; j < testList.length; j++){
         if (!instructionsEqivalent(instructions[testIndex+j], testList[j])){
             return false;
         }
