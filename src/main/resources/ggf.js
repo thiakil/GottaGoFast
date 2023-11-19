@@ -30,21 +30,21 @@ function initializeCoreMod() {
                 'methodDesc': "(Lnet/minecraft/network/protocol/game/ServerboundMovePlayerPacket;)V"
             },
             'transformer': function (methodNode) {
-                var elytravar = getInstructionsList(function (methodVisitor) {
+                var elytraConst = getInstructionsList(function (methodVisitor) {
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
                     methodVisitor.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/server/network/ServerGamePacketListenerImpl", ASMAPI.mapField('f_9743_'), "Lnet/minecraft/server/level/ServerPlayer;"); // player
                     methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/server/level/ServerPlayer", ASMAPI.mapMethod('m_21255_'), "()Z", false);// isFallFlying
                     var label9 = new Label();
                     methodVisitor.visitJumpInsn(Opcodes.IFEQ, label9);
-                    methodVisitor.visitLdcInsn(new java.lang.Float("300.0"));
+                    methodVisitor.visitLdcInsn(java.lang.Float.valueOf(300));
                 });
 
-                var normalMovementvar = getInstructionsList(function (methodVisitor) {
+                var normalMovementConst = getInstructionsList(function (methodVisitor) {
                     var label9 = new Label();
-                    methodVisitor.visitJumpInsn(IFEQ, label9);
+                    methodVisitor.visitJumpInsn(Opcodes.IFEQ, label9);
                     methodVisitor.visitLdcInsn(java.lang.Float.valueOf(300));
                     var label10 = new Label();
-                    methodVisitor.visitJumpInsn(GOTO, label10);
+                    methodVisitor.visitJumpInsn(Opcodes.GOTO, label10);
                     methodVisitor.visitLabel(label9);
                     methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
                     methodVisitor.visitLdcInsn(java.lang.Float.valueOf(100));
@@ -76,8 +76,8 @@ function initializeCoreMod() {
                 "methodName": ASMAPI.mapMethod("m_5659_"),
                 "methodDesc": "(Lnet/minecraft/network/protocol/game/ServerboundMoveVehiclePacket;)V"
             },
-            'transformer': function (method) {
-                var vehicleMovementvar = getInstructionsList(function (mv) {
+            'transformer': function (methodNode) {
+                var vehicleMovementConst = getInstructionsList(function (mv) {
                     mv.visitVarInsn(Opcodes.DLOAD, 26);
                     mv.visitVarInsn(Opcodes.DLOAD, 24);
                     mv.visitInsn(Opcodes.DSUB);
@@ -93,7 +93,7 @@ function initializeCoreMod() {
                         methodNode.instructions.remove(vehicleMoveNode);
                     }
                 }
-                return method
+                return methodNode
             }
         }
     };
