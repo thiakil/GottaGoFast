@@ -1,25 +1,7 @@
-/*
- * This file is part of ConcreteFactories. Copyright 2017 Thiakil
- *
- * ConcreteFactories is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * ConcreteFactories is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with ConcreteFactories.  If not, see <http://www.gnu.org/licenses/>.
- */
 
 package com.thiakil.gottagofast.coremod;
 
 import com.thiakil.gottagofast.GottaGoFastMod;
-import net.minecraft.launchwrapper.IClassTransformer;
-import net.minecraft.launchwrapper.Launch;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
@@ -30,10 +12,10 @@ import org.objectweb.asm.tree.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class GottaGoFastASMTransformer implements IClassTransformer {
+public class GottaGoFastASMTransformer/* implements IClassTransformer*/ {
     private static final String NETHANDLERSERVER_CLASS = "net.minecraft.network.NetHandlerPlayServer";//.processPlayer
 
-    private static boolean isDev = (Boolean)Launch.blackboard.get("fml.deobfuscatedEnvironment");
+    private static boolean isDev = false;//(Boolean)Launch.blackboard.get("fml.deobfuscatedEnvironment");
 
     private static final String NetHandlerPlayServer_processPlayer = srg("processPlayer", "func_147347_a");
     private static final String NetHandlerPlayServer_processVehicleMove = srg("processVehicleMove", "func_184338_a");
@@ -70,7 +52,7 @@ public class GottaGoFastASMTransformer implements IClassTransformer {
     public GottaGoFastASMTransformer(){
     }
 
-    @Override
+    //@Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
         if (!transformedName.equals(NETHANDLERSERVER_CLASS)) {
             return basicClass;
@@ -87,9 +69,10 @@ public class GottaGoFastASMTransformer implements IClassTransformer {
             }
 
             if (needsRewrite) {
-                final ClassWriter writer = new MCClassWriter(ClassWriter.COMPUTE_MAXS);
-                classNode.accept(writer);
-                return writer.toByteArray();
+                throw new IllegalStateException("Not used");
+                //final ClassWriter writer = new MCClassWriter(ClassWriter.COMPUTE_MAXS);
+                //classNode.accept(writer);
+                //return writer.toByteArray();
             } else {
                 return basicClass;
             }
