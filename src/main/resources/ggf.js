@@ -9,6 +9,10 @@ var MethodNode = Packages.org.objectweb.asm.tree.MethodNode
 var Opcodes = Packages.org.objectweb.asm.Opcodes
 var Label = Packages.org.objectweb.asm.Label
 
+function log(msg) {
+    ASMAPI.log("INFO", msg)
+}
+
 function initializeCoreMod() {
     return {
         'playerMove': {
@@ -37,7 +41,7 @@ function moveVehicleTransformer(methodNode) {
         mv.visitVarInsn(Opcodes.DLOAD, 26);
         mv.visitVarInsn(Opcodes.DLOAD, 24);
         mv.visitInsn(Opcodes.DSUB);
-        mv.visitLdcInsn(java.lang.Double.valueOf(100));
+        mv.visitLdcInsn(Java.to([100], 'double[]')[0]);
     });
 
     var vehicleMoveNode = null;
@@ -47,6 +51,7 @@ function moveVehicleTransformer(methodNode) {
             vehicleMoveNode = instructions[i + vehicleMovementConst.length - 1];
             methodNode.instructions.insertBefore(vehicleMoveNode, new FieldInsnNode(Opcodes.GETSTATIC, "com/thiakil/gottagofast/GottaGoFastMod", "MAX_PLAYER_VEHICLE_SPEED", "D"));
             methodNode.instructions.remove(vehicleMoveNode);
+            log("patched handleMoveVehicle successfully")
         }
     }
     return methodNode
@@ -59,18 +64,18 @@ function movePlayerTransformer(methodNode) {
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/server/level/ServerPlayer", ASMAPI.mapMethod('m_21255_'), "()Z", false);// isFallFlying
         var label9 = new Label();
         methodVisitor.visitJumpInsn(Opcodes.IFEQ, label9);
-        methodVisitor.visitLdcInsn(java.lang.Float.valueOf(300));
+        methodVisitor.visitLdcInsn(Java.to([300], 'float[]')[0]);
     });
 
     var normalMovementConst = getInstructionsList(function (methodVisitor) {
         var label9 = new Label();
         methodVisitor.visitJumpInsn(Opcodes.IFEQ, label9);
-        methodVisitor.visitLdcInsn(java.lang.Float.valueOf(300));
+        methodVisitor.visitLdcInsn(Java.to([300], 'float[]')[0]);
         var label10 = new Label();
         methodVisitor.visitJumpInsn(Opcodes.GOTO, label10);
         methodVisitor.visitLabel(label9);
         methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-        methodVisitor.visitLdcInsn(java.lang.Float.valueOf(100));
+        methodVisitor.visitLdcInsn(Java.to([100], 'float[]')[0]);
     });
 
     var elytraMoveNode = null;
@@ -82,10 +87,12 @@ function movePlayerTransformer(methodNode) {
             elytraMoveNode = instructions[i + elytraConst.length - 1];
             methodNode.instructions.insertBefore(elytraMoveNode, new FieldInsnNode(Opcodes.GETSTATIC, "com/thiakil/gottagofast/GottaGoFastMod", "MAX_PLAYER_ELYTRA_SPEED", "F"));
             methodNode.instructions.remove(elytraMoveNode);
+            log("patched handleMovePlayer elytra part successfully")
         } else if (matchesList(instructions, i, normalMovementConst)) {
             normalMoveNode = instructions[i + normalMovementConst.length - 1];
             methodNode.instructions.insertBefore(normalMoveNode, new FieldInsnNode(Opcodes.GETSTATIC, "com/thiakil/gottagofast/GottaGoFastMod", "MAX_PLAYER_SPEED", "F"));
             methodNode.instructions.remove(normalMoveNode);
+            log("patched handleMovePlayer player speed part successfully")
         }
     }
 
