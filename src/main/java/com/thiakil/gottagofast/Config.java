@@ -1,21 +1,21 @@
 package com.thiakil.gottagofast;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.config.ModConfigEvent;
 
 @Mod.EventBusSubscriber(modid = GottaGoFastMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
 
-    public static final ForgeConfigSpec.DoubleValue MAX_PLAYER_SPEED;
-    public static final ForgeConfigSpec.DoubleValue MAX_PLAYER_ELYTRA_SPEED;
-    public static final ForgeConfigSpec.DoubleValue MAX_PLAYER_VEHICLE_SPEED;
+    public static final ModConfigSpec.DoubleValue MAX_PLAYER_SPEED;
+    public static final ModConfigSpec.DoubleValue MAX_PLAYER_ELYTRA_SPEED;
+    public static final ModConfigSpec.DoubleValue MAX_PLAYER_VEHICLE_SPEED;
 
-    static final ForgeConfigSpec SPEC;
+    static final ModConfigSpec SPEC;
 
     static {
-        ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+        ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
         
         MAX_PLAYER_SPEED = BUILDER
                 .comment("Maximum player movement speed (x^2 + y^2 + z^2) before triggering the moved too quickly messages. Vanilla is 100.0")

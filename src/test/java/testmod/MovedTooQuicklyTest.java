@@ -1,10 +1,6 @@
 package testmod;
 
 
-import net.minecraftforge.common.MinecraftForge;
-
-import net.minecraftforge.fml.common.Mod;
-
 //TY Darkhax
 
 //@Mod(modid = MovedTooQuicklyTest.MOD_ID, name = "Moved Too Quickly Test", version = "1.0")

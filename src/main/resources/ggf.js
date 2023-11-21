@@ -1,4 +1,4 @@
-var ASMAPI = Packages.net.minecraftforge.coremod.api.ASMAPI
+var ASMAPI = Packages.net.neoforged.coremod.api.ASMAPI
 var AbstractInsnNode = Packages.org.objectweb.asm.tree.AbstractInsnNode
 var MethodInsnNode = Packages.org.objectweb.asm.tree.MethodInsnNode
 var VarInsnNode = Packages.org.objectweb.asm.tree.VarInsnNode
@@ -12,6 +12,9 @@ var Label = Packages.org.objectweb.asm.Label
 function log(msg) {
     ASMAPI.log("INFO", msg)
 }
+function error(msg) {
+    ASMAPI.log('ERROR', msg)
+}
 
 function initializeCoreMod() {
     return {
@@ -19,7 +22,7 @@ function initializeCoreMod() {
             'target': {
                 'type': 'METHOD',
                 'class': 'net.minecraft.server.network.ServerGamePacketListenerImpl',
-                'methodName': ASMAPI.mapMethod('m_7185_'),//handleMovePlayer
+                'methodName': 'handleMovePlayer',
                 'methodDesc': "(Lnet/minecraft/network/protocol/game/ServerboundMovePlayerPacket;)V"
             },
             'transformer': movePlayerTransformer
@@ -28,7 +31,7 @@ function initializeCoreMod() {
             'target': {
                 "type": "METHOD",
                 "class": "net.minecraft.server.network.ServerGamePacketListenerImpl",
-                "methodName": ASMAPI.mapMethod("m_5659_"),//handleMoveVehicle
+                "methodName": 'handleMoveVehicle',
                 "methodDesc": "(Lnet/minecraft/network/protocol/game/ServerboundMoveVehiclePacket;)V"
             },
             'transformer': moveVehicleTransformer
@@ -54,14 +57,17 @@ function moveVehicleTransformer(methodNode) {
             log("patched handleMoveVehicle successfully")
         }
     }
+    if (!vehicleMoveNode) {
+        error("failed to patch handleMoveVehicle")
+    }
     return methodNode
 }
 
 function movePlayerTransformer(methodNode) {
     var elytraConst = getInstructionsList(function (methodVisitor) {
         methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-        methodVisitor.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/server/network/ServerGamePacketListenerImpl", ASMAPI.mapField('f_9743_'), "Lnet/minecraft/server/level/ServerPlayer;"); // player
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/server/level/ServerPlayer", ASMAPI.mapMethod('m_21255_'), "()Z", false);// isFallFlying
+        methodVisitor.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/server/network/ServerGamePacketListenerImpl", 'player', "Lnet/minecraft/server/level/ServerPlayer;");
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/server/level/ServerPlayer", 'isFallFlying', "()Z", false);
         var label9 = new Label();
         methodVisitor.visitJumpInsn(Opcodes.IFEQ, label9);
         methodVisitor.visitLdcInsn(Java.to([300], 'float[]')[0]);
@@ -94,6 +100,13 @@ function movePlayerTransformer(methodNode) {
             methodNode.instructions.remove(normalMoveNode);
             log("patched handleMovePlayer player speed part successfully")
         }
+    }
+
+    if (!elytraMoveNode) {
+        error('failed to patch handleMovePlayer/elytra')
+    }
+    if (!normalMoveNode) {
+        error('failed to patch handleMovePlayer/regular')
     }
 
     return methodNode
