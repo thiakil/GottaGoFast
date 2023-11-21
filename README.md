@@ -1,6 +1,6 @@
 # Gotta Go Fast
 
-Very simple **Core Mod** for 1.12
+Very simple **Core Mod**
 
 This mod removes the server side check for if a player moves too far too quickly and teleports them back. 
 
