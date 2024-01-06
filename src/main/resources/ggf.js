@@ -1,4 +1,4 @@
-var ASMAPI = Packages.net.neoforged.coremod.api.ASMAPI
+var ASMAPI = Packages.net.minecraftforge.coremod.api.ASMAPI
 var AbstractInsnNode = Packages.org.objectweb.asm.tree.AbstractInsnNode
 var MethodInsnNode = Packages.org.objectweb.asm.tree.MethodInsnNode
 var VarInsnNode = Packages.org.objectweb.asm.tree.VarInsnNode
@@ -22,7 +22,7 @@ function initializeCoreMod() {
             'target': {
                 'type': 'METHOD',
                 'class': 'net.minecraft.server.network.ServerGamePacketListenerImpl',
-                'methodName': 'handleMovePlayer',
+                'methodName': ASMAPI.mapMethod('m_7185_'),//handleMovePlayer
                 'methodDesc': "(Lnet/minecraft/network/protocol/game/ServerboundMovePlayerPacket;)V"
             },
             'transformer': movePlayerTransformer
@@ -31,7 +31,7 @@ function initializeCoreMod() {
             'target': {
                 "type": "METHOD",
                 "class": "net.minecraft.server.network.ServerGamePacketListenerImpl",
-                "methodName": 'handleMoveVehicle',
+                "methodName": ASMAPI.mapMethod("m_5659_"),//handleMoveVehicle
                 "methodDesc": "(Lnet/minecraft/network/protocol/game/ServerboundMoveVehiclePacket;)V"
             },
             'transformer': moveVehicleTransformer
@@ -66,8 +66,8 @@ function moveVehicleTransformer(methodNode) {
 function movePlayerTransformer(methodNode) {
     var elytraConst = getInstructionsList(function (methodVisitor) {
         methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-        methodVisitor.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/server/network/ServerGamePacketListenerImpl", 'player', "Lnet/minecraft/server/level/ServerPlayer;");
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/server/level/ServerPlayer", 'isFallFlying', "()Z", false);
+        methodVisitor.visitFieldInsn(Opcodes.GETFIELD, "net/minecraft/server/network/ServerGamePacketListenerImpl", ASMAPI.mapField('f_9743_'), "Lnet/minecraft/server/level/ServerPlayer;"); // player
+        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "net/minecraft/server/level/ServerPlayer", ASMAPI.mapMethod('m_21255_'), "()Z", false);// isFallFlying
         var label9 = new Label();
         methodVisitor.visitJumpInsn(Opcodes.IFEQ, label9);
         methodVisitor.visitLdcInsn(Java.to([300], 'float[]')[0]);
